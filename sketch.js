@@ -367,11 +367,12 @@ let gameState = STATE_PLAY;
 // ------------------------------------------------------------
 // let shootSound;
 // let hitSound;
-// let playerHitSound;
+let playerHitSound;
 // let bossHitSound;
 // let bossMusic;
-// let winSound;
-// let music;
+let winSound;
+let music;
+let endSoundPlayed = false;
 
 // ============================================================
 // preload()
@@ -382,12 +383,12 @@ function preload() {
 
   // Uncomment to load sounds:
   // shootSound     = loadSound("assets/sounds/shoot.wav");
-  // hitSound       = loadSound("assets/sounds/hit.wav");
-  // playerHitSound = loadSound("assets/sounds/playerhit.wav");
+  //hitSound       = loadSound("assets/sounds/hit.wav");
+  playerHitSound = loadSound("assets/sounds/gg_hit.mp3");
   // bossHitSound   = loadSound("assets/sounds/bosshit.wav");
   // bossMusic      = loadSound("assets/sounds/bossmusic.mp3");
-  // winSound       = loadSound("assets/sounds/win.wav");
-  // music          = loadSound("assets/sounds/music.mp3");
+  winSound = loadSound("assets/sounds/end.mp3");
+  music = loadSound("assets/sounds/music_loop.mp3");
 }
 
 // ============================================================
@@ -421,7 +422,7 @@ function setup() {
   camY = player.y - height / 2;
 
   // Uncomment to start music:
-  // music.loop();
+  music.loop();
 }
 
 // ============================================================
@@ -585,11 +586,11 @@ function checkObstaclePlayerCollision() {
         player.bounceVY = (dy / len) * 8;
       }
 
-      // playerHitSound.play();
+      playerHitSound.play();
 
-      if (player.health <= 0) {
+      if (player.health <= 1) {
         gameState = STATE_OVER;
-        // music.stop();
+        music.stop();
       }
       break;
     }
@@ -798,7 +799,7 @@ function spawnBoss() {
   enemies = [];
   gameState = STATE_BOSS;
 
-  // music.stop();
+  music.stop();
   // bossMusic.loop();
 }
 
@@ -884,7 +885,7 @@ function checkBulletBossCollision() {
 
       if (boss.health <= 0) {
         gameState = STATE_WIN;
-        // winSound.play();
+        winSound.play();
         // bossMusic.stop();
       }
       break;
@@ -903,11 +904,10 @@ function checkBossPlayerCollision() {
     player.health--;
     player.invincible = true;
     player.invincibleTimer = INVINCIBLE_FRAMES;
-    // playerHitSound.play();
+    playerHitSound.play();
 
     if (player.health <= 0) {
       gameState = STATE_OVER;
-      // bossMusic.stop();
     }
   }
 }
@@ -924,11 +924,11 @@ function checkEnemyPlayerCollision() {
       player.health--;
       player.invincible = true;
       player.invincibleTimer = INVINCIBLE_FRAMES;
-      // playerHitSound.play();
+      playerHitSound.play();
 
       if (player.health <= 0) {
         gameState = STATE_OVER;
-        // music.stop();
+        winSound.play();
       }
       break;
     }
@@ -1257,6 +1257,7 @@ function drawWinScreen() {
   fill(120);
   textSize(14);
   text("Press R to play again", width / 2, height / 2 + 60);
+  playEndSoundOnce();
 }
 
 // ------------------------------------------------------------
@@ -1278,6 +1279,15 @@ function drawGameOver() {
   fill(120);
   textSize(14);
   text("Press R to play again", width / 2, height / 2 + 60);
+  playEndSoundOnce();
+}
+
+function playEndSoundOnce() {
+  if (!endSoundPlayed) {
+    music.stop();
+    winSound.play();
+    endSoundPlayed = true;
+  }
 }
 
 // ------------------------------------------------------------
@@ -1317,6 +1327,8 @@ function keyPressed() {
     camX = player.x - width / 2;
     camY = player.y - height / 2;
 
-    // music.loop();
+    endSoundPlayed = false;
+
+    music.loop();
   }
 }
