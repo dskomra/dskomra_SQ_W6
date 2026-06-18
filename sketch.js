@@ -277,7 +277,7 @@ const CAM_SMOOTHING = 0.1;
 // ------------------------------------------------------------
 // PLAYER CONFIGURATION
 // ------------------------------------------------------------
-const PLAYER_SPEED = 3;
+const PLAYER_SPEED = 5;
 const BULLET_SPEED = 10;
 const SHOOT_COOLDOWN = 12;
 const INVINCIBLE_FRAMES = 90;
@@ -289,7 +289,7 @@ const INVINCIBLE_FRAMES = 90;
 // ------------------------------------------------------------
 let player = {
   x: WORLD_W / 2,
-  y: WORLD_H - 200,
+  y: WORLD_H - 60,
   r: 22,
   blobT: 0,
   direction: { x: 0, y: -1 },
@@ -332,7 +332,7 @@ let nextWave = 0;
 // ------------------------------------------------------------
 let boss = null;
 let bossData = null;
-const BOSS_ZONE_Y = 300; // world Y — enter this zone to trigger boss
+const BOSS_ZONE_Y = 335; // world Y — enter this zone to trigger boss
 
 // ------------------------------------------------------------
 // BACKGROUND SHAPES
@@ -365,14 +365,17 @@ let gameState = STATE_PLAY;
 // ------------------------------------------------------------
 // SOUNDS — uncomment and fill in paths to add audio
 // ------------------------------------------------------------
-// let shootSound;
-// let hitSound;
+let shootSound;
+let hitSound;
 let playerHitSound;
-// let bossHitSound;
-// let bossMusic;
+let bossHitSound;
+let bossMusic;
 let winSound;
 let music;
 let endSoundPlayed = false;
+
+let rock;
+let backgroundImg;
 
 // ============================================================
 // preload()
@@ -381,14 +384,18 @@ function preload() {
   enemyData = loadJSON("data/enemies.json");
   obstacleData = loadJSON("data/obstacles.json");
 
-  // Uncomment to load sounds:
-  // shootSound     = loadSound("assets/sounds/shoot.wav");
-  //hitSound       = loadSound("assets/sounds/hit.wav");
+  //sounds:
+  shootSound = loadSound("assets/sounds/throw.mp3");
+  hitSound = loadSound("assets/sounds/bg_hit.mp3");
   playerHitSound = loadSound("assets/sounds/gg_hit.mp3");
-  // bossHitSound   = loadSound("assets/sounds/bosshit.wav");
-  // bossMusic      = loadSound("assets/sounds/bossmusic.mp3");
+  bossHitSound = loadSound("assets/sounds/boss_hit.mp3");
+  bossMusic = loadSound("assets/sounds/boss_music.mp3");
   winSound = loadSound("assets/sounds/end.mp3");
   music = loadSound("assets/sounds/music_loop.mp3");
+
+  // images
+  rock = loadImage("assets/images/rock.png");
+  backgroundImg = loadImage("assets/images/background.png");
 }
 
 // ============================================================
@@ -421,7 +428,6 @@ function setup() {
   camX = player.x - width / 2;
   camY = player.y - height / 2;
 
-  // Uncomment to start music:
   music.loop();
 }
 
@@ -588,7 +594,7 @@ function checkObstaclePlayerCollision() {
 
       playerHitSound.play();
 
-      if (player.health <= 1) {
+      if (player.health < 1) {
         gameState = STATE_OVER;
         music.stop();
       }
@@ -619,34 +625,8 @@ function applyBounce() {
 // Only shapes near the camera are drawn for performance.
 // ------------------------------------------------------------
 function drawBackground() {
-  noStroke();
-  for (let i = 0; i < bgShapes.length; i++) {
-    let s = bgShapes[i];
-
-    // Skip shapes far from the camera view
-    if (
-      s.x < camX - s.size ||
-      s.x > camX + width + s.size ||
-      s.y < camY - s.size ||
-      s.y > camY + height + s.size
-    )
-      continue;
-
-    fill(s.r, s.g, s.b, 160);
-
-    if (s.type === "circle") {
-      ellipse(s.x, s.y, s.size);
-    } else {
-      rect(s.x - s.size / 2, s.y - s.size / 2, s.size, s.size, 3);
-    }
-  }
-
-  // World boundary outline
-  noFill();
-  stroke(60, 50, 80);
-  strokeWeight(4);
-  rect(0, 0, WORLD_W, WORLD_H);
-  noStroke();
+  imageMode(CENTER);
+  image(backgroundImg, WORLD_W / 2, WORLD_H / 2, WORLD_W, WORLD_H);
 }
 
 // ------------------------------------------------------------
@@ -714,7 +694,7 @@ function handleInput() {
       vy: player.direction.y * BULLET_SPEED,
     });
     player.shootTimer = SHOOT_COOLDOWN;
-    // shootSound.play();
+    shootSound.play();
   }
 }
 
@@ -800,7 +780,7 @@ function spawnBoss() {
   gameState = STATE_BOSS;
 
   music.stop();
-  // bossMusic.loop();
+  bossMusic.loop();
 }
 
 // ------------------------------------------------------------
@@ -881,12 +861,12 @@ function checkBulletBossCollision() {
     if (d < boss.r + 6) {
       bullets.splice(i, 1);
       boss.health--;
-      // bossHitSound.play();
+      bossHitSound.play();
 
       if (boss.health <= 0) {
         gameState = STATE_WIN;
+        bossMusic.stop();
         winSound.play();
-        // bossMusic.stop();
       }
       break;
     }
@@ -908,6 +888,8 @@ function checkBossPlayerCollision() {
 
     if (player.health <= 0) {
       gameState = STATE_OVER;
+      bossMusic.stop();
+      winSound.play();
     }
   }
 }
@@ -946,7 +928,7 @@ function checkBulletEnemyCollisions() {
         bullets.splice(i, 1);
         enemies.splice(j, 1);
         score++;
-        // hitSound.play();
+        hitSound.play();
         break;
       }
     }
@@ -1045,7 +1027,7 @@ function drawBullets() {
   fill(255);
   noStroke();
   for (let i = 0; i < bullets.length; i++) {
-    ellipse(bullets[i].x, bullets[i].y, 10);
+    image(rock, bullets[i].x - 10, bullets[i].y - 10, 20, 20);
   }
 }
 
@@ -1078,10 +1060,12 @@ function drawPlayer() {
   ellipse(player.x + 7, player.y - 5, 7, 7);
 
   fill(255);
-  ellipse(
-    player.x + player.direction.x * (player.r - 4),
-    player.y + player.direction.y * (player.r - 4),
-    8,
+  image(
+    rock,
+    player.x + player.direction.x * (player.r + 15),
+    player.y + player.direction.y * player.r + 10,
+    20,
+    20,
   );
 
   pop();
@@ -1315,7 +1299,7 @@ function keyPressed() {
     boss = null;
 
     player.x = WORLD_W / 2;
-    player.y = WORLD_H - 200;
+    player.y = WORLD_H - 60;
     player.direction = { x: 0, y: -1 };
     player.shootTimer = 0;
     player.health = player.maxHealth;
