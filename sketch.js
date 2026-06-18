@@ -1,7 +1,3 @@
-// ============================================================
-// Week 5 Example 1 — Sprite Sheet Animation
-// ============================================================
-
 // ------------------------------------------------------------
 // SPRITE CONFIGURATION
 // Adjust these values to match your sprite sheet.
@@ -15,13 +11,12 @@
 //               1 = original size, 2 = double, 3 = triple
 // ------------------------------------------------------------
 
-/*
 const SPRITE = {
   frameWidth: 230, // width of one frame  (300px / 4 frames)
   frameHeight: 256, // height of one frame (600px / 4 rows)
   numFrames: 6, // frames per row
   animSpeed: 10, // draw() frames per sprite frame (higher = slower)
-  scale: 0.25, // draw at half original size
+  scale: 0.3, // draw at half original size
 
   // Row index for each direction
   // Change these if your sheet has a different row order
@@ -44,199 +39,26 @@ const SPRITE = {
   },
 };
 
-// ------------------------------------------------------------
-// PLAYER
-// x, y track the centre position on the canvas.
-// Animation state is stored alongside position so everything
-// about the player is in one place.
-// ------------------------------------------------------------
-let player = {
-  x: 400, // centre x position on canvas
-  y: 225, // centre y position on canvas
-  speed: 3, // pixels moved per frame
-
-  // Animation state
-  currentFrame: 0, // which frame in the row (0 to numFrames-1)
-  frameTimer: 0, // counts up to animSpeed then advances frame
-  direction: "down", // current facing direction
-  isMoving: false, // only animate when moving
+// Werewolf sheet values from the commented reference block above.
+const WOLF_SPRITE = {
+  frameWidth: 242,
+  frameHeight: 256,
+  numFrames: 6,
+  animSpeed: 10,
+  scale: 0.4,
+  rows: {
+    down: 0,
+    up: 1,
+    right: 3,
+    left: 2,
+  },
+  offsets: {
+    down: { x: 45, y: 20 },
+    up: { x: 45, y: 20 },
+    right: { x: 45, y: -20 },
+    left: { x: 45, y: 0 },
+  },
 };
-
-let mario; // the loaded sprite sheet image
-let bg;
-
-// ============================================================
-// preload()
-// Runs once before setup(). Always load images here so theyweretest
-// are ready before the sketch tries to use them.
-// ============================================================
-function preload() {
-  // loadImage() loads the sprite sheet before setup() runs
-  mario = loadImage("assets/images/villager.png");
-  bg = loadImage("assets/images/background.png");
-}
-
-// ============================================================
-// setup()
-// Runs once at the very start of the sketch.
-// imageMode(CENTER) makes image() draw from the centre point
-// rather than the top-left corner.
-// ============================================================
-function setup() {
-  createCanvas(800, 450);
-  imageMode(CENTER);
-}
-
-// ============================================================
-// draw()
-// Runs repeatedly in a loop after setup() finishes.
-// Each frame: handle input, advance animation, draw everything.
-// ============================================================
-function draw() {
-  image(bg, width / 2, height / 2, width, height);
-
-  handleInput();
-  animateSprite();
-  drawCharacter();
-  drawHUD();
-}
-
-// ------------------------------------------------------------
-// handleInput()
-// Moves the player and sets the correct facing direction.
-// Each direction is checked independently so diagonal
-// movement works naturally — holding W and D moves up-right.
-// The last key held wins for direction (D overrides W if both
-// are held and D is checked last).
-// ------------------------------------------------------------
-function handleInput() {
-  player.isMoving = false;
-
-  if (keyIsDown(87)) {
-    // W — up
-    player.y -= player.speed;
-    player.direction = "up";
-    player.isMoving = true;
-  }
-  if (keyIsDown(83)) {
-    // S — down
-    player.y += player.speed;
-    player.direction = "down";
-    player.isMoving = true;
-  }
-  if (keyIsDown(65)) {
-    // A — left
-    player.x -= player.speed;
-    player.direction = "left";
-    player.isMoving = true;
-  }
-  if (keyIsDown(68)) {
-    // D — right
-    player.x += player.speed;
-    player.direction = "right";
-    player.isMoving = true;
-  }
-
-  // Keep player inside the canvas
-  // hw and hh are the half-dimensions of the drawn sprite
-  let hw = (SPRITE.frameWidth * SPRITE.scale) / 2;
-  let hh = (SPRITE.frameHeight * SPRITE.scale) / 2;
-  player.x = constrain(player.x, hw, width - hw);
-  player.y = constrain(player.y, hh, height - hh);
-}
-
-// ------------------------------------------------------------
-// animateSprite()
-// Advances the animation frame at a controlled speed.
-// frameTimer counts up every draw() call.
-// When it reaches animSpeed, we move to the next frame.
-// Only animates when the player is moving — stays on frame 0
-// when idle so the character stands still.
-// ------------------------------------------------------------
-function animateSprite() {
-  if (player.isMoving) {
-    player.frameTimer++;
-
-    // When the timer reaches animSpeed, advance to the next frame
-    // % numFrames wraps back to 0 after the last frame
-    if (player.frameTimer >= SPRITE.animSpeed) {
-      player.frameTimer = 0;
-      player.currentFrame = (player.currentFrame + 1) % SPRITE.numFrames;
-    }
-  } else {
-    // Reset to standing frame when not moving
-    player.currentFrame = 0;
-    player.frameTimer = 0;
-  }
-}
-
-// ------------------------------------------------------------
-// drawCharacter()
-// Draws one frame from the sprite sheet using image() with
-// source rectangle parameters.
-//
-// image(img, dx, dy, dw, dh, sx, sy, sw, sh)
-//   dx, dy — where to draw on the canvas (destination centre)
-//   dw, dh — how large to draw it (destination size)
-//   sx, sy — where to start reading from the sprite sheet
-//   sw, sh — how many pixels to read from the sheet
-//
-// sx slides along the row by multiplying frame number by
-// frameWidth — each frame is one frameWidth apart.
-// sy selects the row by multiplying row index by frameHeight.
-// ------------------------------------------------------------
-function drawCharacter() {
-  // Get the correct row and offset for the current direction
-  let row = SPRITE.rows[player.direction];
-  let offset = SPRITE.offsets[player.direction];
-
-  // Source position on the sprite sheet (with offset applied)
-  let sx = player.currentFrame * SPRITE.frameWidth + offset.x;
-  let sy = row * SPRITE.frameHeight + offset.y;
-
-  // Draw size (original frame size multiplied by scale)
-  let dw = SPRITE.frameWidth * SPRITE.scale;
-  let dh = SPRITE.frameHeight * SPRITE.scale;
-
-  image(
-    mario,
-    player.x,
-    player.y, // destination centre position
-    dw,
-    dh, // destination size (scaled)
-    sx,
-    sy, // source position on sprite sheet
-    SPRITE.frameWidth, // source width  (one frame)
-    SPRITE.frameHeight, // source height (one row)
-  );
-}
-
-// ------------------------------------------------------------
-// drawHUD()
-// HUD = Heads Up Display.
-// Shows controls and current animation info for reference.
-// The frame/row readout is useful when tuning a new sprite sheet.
-// ------------------------------------------------------------
-function drawHUD() {
-  noStroke();
-  fill(160);
-  textSize(13);
-  textAlign(LEFT);
-  textFont("monospace");
-  text("Move: WASD", 16, 24);
-
-  // Debug info — useful when aligning frames on a new sheet
-  fill(100);
-  textSize(11);
-  text("Direction: " + player.direction, 16, 44);
-  text(
-    "Frame: " + player.currentFrame + " / " + (SPRITE.numFrames - 1),
-    16,
-    58,
-  );
-  text("Row: " + SPRITE.rows[player.direction], 16, 72);
-}
-*/
 
 // ============================================================
 // Week 6 Example 2 — Free Roam Top-Down with Boss Battle
@@ -256,11 +78,11 @@ function drawHUD() {
 //   data/obstacles.json — obstacle positions in world coordinates
 // ============================================================
 
-// ------------------------------------------------------------
+// ============================================================
 // WORLD
 // The world is larger than the canvas. The camera follows
 // the player so only part of the world is visible at once.
-// ------------------------------------------------------------
+// ============================================================
 const WORLD_W = 1600; // total world width in pixels
 const WORLD_H = 2000; // total world height in pixels
 
@@ -277,7 +99,7 @@ const CAM_SMOOTHING = 0.1;
 // ------------------------------------------------------------
 // PLAYER CONFIGURATION
 // ------------------------------------------------------------
-const PLAYER_SPEED = 5;
+const PLAYER_SPEED = 4;
 const BULLET_SPEED = 10;
 const SHOOT_COOLDOWN = 12;
 const INVINCIBLE_FRAMES = 90;
@@ -286,13 +108,14 @@ const INVINCIBLE_FRAMES = 90;
 // PLAYER
 // Position is in world coordinates.
 // Starts near the bottom centre of the world.
+// Animation and direction state for sprite animation.
 // ------------------------------------------------------------
 let player = {
   x: WORLD_W / 2,
   y: WORLD_H - 60,
   r: 22,
-  blobT: 0,
-  direction: { x: 0, y: -1 },
+  direction: { x: 0, y: -1 }, // for bullet direction
+  animDirection: "down", // for sprite animation
   shootTimer: 0,
   health: 5,
   maxHealth: 5,
@@ -300,6 +123,10 @@ let player = {
   invincibleTimer: 0,
   bounceVX: 0,
   bounceVY: 0,
+  // Animation state
+  currentFrame: 0,
+  frameTimer: 0,
+  isMoving: false,
 };
 
 // ------------------------------------------------------------
@@ -377,6 +204,9 @@ let endSoundPlayed = false;
 let rock;
 let backgroundImg;
 
+let mario; // the loaded sprite sheet image
+let werewolf; // werewolf sprite sheet for enemies and boss
+
 // ============================================================
 // preload()
 // ============================================================
@@ -396,6 +226,8 @@ function preload() {
   // images
   rock = loadImage("assets/images/rock.png");
   backgroundImg = loadImage("assets/images/background.png");
+  mario = loadImage("assets/images/villager.png");
+  werewolf = loadImage("assets/images/werewolf.png");
 }
 
 // ============================================================
@@ -403,6 +235,7 @@ function preload() {
 // ============================================================
 function setup() {
   createCanvas(800, 450);
+  imageMode(CENTER);
   bossData = enemyData.boss;
 
   // Build obstacle objects from JSON
@@ -448,6 +281,7 @@ function draw() {
 
   if (gameState === STATE_PLAY) {
     handleInput();
+    animateSprite();
     applyBounce();
     updateBullets();
     updateEnemies();
@@ -463,6 +297,7 @@ function draw() {
     drawPlayer();
   } else if (gameState === STATE_BOSS) {
     handleInput();
+    animateSprite();
     applyBounce();
     updateBullets();
     updateBoss();
@@ -661,23 +496,34 @@ function drawBossZone() {
 // WASD moves the player in world coordinates.
 // Constrained to world boundaries.
 // Spacebar fires in the current facing direction.
+// Updates both bullet direction and sprite animation direction.
 // ------------------------------------------------------------
 function handleInput() {
+  player.isMoving = false;
+
   if (keyIsDown(87)) {
     player.y -= PLAYER_SPEED;
     player.direction = { x: 0, y: -1 };
+    player.animDirection = "up";
+    player.isMoving = true;
   }
   if (keyIsDown(83)) {
     player.y += PLAYER_SPEED;
     player.direction = { x: 0, y: 1 };
+    player.animDirection = "down";
+    player.isMoving = true;
   }
   if (keyIsDown(65)) {
     player.x -= PLAYER_SPEED;
     player.direction = { x: -1, y: 0 };
+    player.animDirection = "left";
+    player.isMoving = true;
   }
   if (keyIsDown(68)) {
     player.x += PLAYER_SPEED;
     player.direction = { x: 1, y: 0 };
+    player.animDirection = "right";
+    player.isMoving = true;
   }
 
   // Keep player inside world bounds
@@ -737,6 +583,9 @@ function checkWaveSpawns() {
         r: 20,
         speed: data.speed,
         blobT: random(100),
+        currentFrame: 0,
+        frameTimer: 0,
+        animDirection: "down",
       });
     }
     nextWave++;
@@ -774,6 +623,9 @@ function spawnBoss() {
     retreatY: bossData.retreatY,
     chargeVX: 0,
     chargeVY: 0,
+    currentFrame: 0,
+    frameTimer: 0,
+    animDirection: "down",
   };
 
   enemies = [];
@@ -781,6 +633,16 @@ function spawnBoss() {
 
   music.stop();
   bossMusic.loop();
+}
+
+// ------------------------------------------------------------
+// directionFromVelocity()
+// Maps movement vectors to sprite rows in the sheet.
+// ------------------------------------------------------------
+function directionFromVelocity(dx, dy, fallback = "down") {
+  if (abs(dx) < 0.001 && abs(dy) < 0.001) return fallback;
+  if (abs(dx) > abs(dy)) return dx > 0 ? "right" : "left";
+  return dy > 0 ? "down" : "up";
 }
 
 // ------------------------------------------------------------
@@ -795,6 +657,7 @@ function updateEnemies() {
     let d = dist(e.x, e.y, player.x, player.y);
 
     if (d > 0) {
+      e.animDirection = directionFromVelocity(dx, dy, e.animDirection);
       e.x += (dx / d) * e.speed;
       e.y += (dy / d) * e.speed;
     }
@@ -817,9 +680,19 @@ function updateBoss() {
       let d = dist(boss.x, boss.y, player.x, player.y);
       boss.chargeVX = (dx / d) * boss.chargeSpeed;
       boss.chargeVY = (dy / d) * boss.chargeSpeed;
+      boss.animDirection = directionFromVelocity(
+        boss.chargeVX,
+        boss.chargeVY,
+        boss.animDirection,
+      );
       boss.state = "charging";
     }
   } else if (boss.state === "charging") {
+    boss.animDirection = directionFromVelocity(
+      boss.chargeVX,
+      boss.chargeVY,
+      boss.animDirection,
+    );
     boss.x += boss.chargeVX;
     boss.y += boss.chargeVY;
 
@@ -837,6 +710,7 @@ function updateBoss() {
     let dx = targetX - boss.x;
     let dy = targetY - boss.y;
     let d = dist(boss.x, boss.y, targetX, targetY);
+    boss.animDirection = directionFromVelocity(dx, dy, boss.animDirection);
 
     if (d < 8) {
       boss.x = targetX;
@@ -950,37 +824,43 @@ function updateInvincibility() {
 // ------------------------------------------------------------
 // drawBoss()
 // Drawn in world coordinates inside push/pop.
+// Draws the boss as an animated sprite from the werewolf sheet.
 // ------------------------------------------------------------
 function drawBoss() {
   if (!boss) return;
 
   push();
-  let isCharging = boss.state === "charging";
-  fill(isCharging ? color(255, 180, 30) : color(255, 130, 20));
-  noStroke();
 
-  beginShape();
-  let numPoints = 48;
-  let wobble = isCharging ? 12 : 8;
-  for (let i = 0; i < numPoints; i++) {
-    let angle = (TWO_PI / numPoints) * i;
-    let noiseVal = noise(
-      cos(angle) * 0.8 + boss.blobT,
-      sin(angle) * 0.8 + boss.blobT,
-    );
-    let r = boss.r + map(noiseVal, 0, 1, -wobble, wobble);
-    vertex(boss.x + cos(angle) * r, boss.y + sin(angle) * r);
+  // Advance animation frame
+  boss.frameTimer++;
+  if (boss.frameTimer >= WOLF_SPRITE.animSpeed) {
+    boss.frameTimer = 0;
+    boss.currentFrame = (boss.currentFrame + 1) % WOLF_SPRITE.numFrames;
   }
-  endShape(CLOSE);
 
-  fill(10);
-  ellipse(boss.x - 18, boss.y - 12, 16, 16);
-  ellipse(boss.x + 18, boss.y - 12, 16, 16);
+  // Get the correct row and offset for the animation direction
+  let row = WOLF_SPRITE.rows[boss.animDirection];
+  let offset = WOLF_SPRITE.offsets[boss.animDirection];
 
-  stroke(10);
-  strokeWeight(4);
-  line(boss.x - 26, boss.y - 22, boss.x - 10, boss.y - 18);
-  line(boss.x + 10, boss.y - 18, boss.x + 26, boss.y - 22);
+  // Source position on the sprite sheet (with offset applied)
+  let sx = boss.currentFrame * WOLF_SPRITE.frameWidth + offset.x;
+  let sy = row * WOLF_SPRITE.frameHeight + offset.y;
+
+  // Draw size (original frame size multiplied by scale)
+  let dw = WOLF_SPRITE.frameWidth * WOLF_SPRITE.scale;
+  let dh = WOLF_SPRITE.frameHeight * WOLF_SPRITE.scale;
+
+  image(
+    werewolf,
+    boss.x,
+    boss.y, // destination centre position
+    dw,
+    dh, // destination size (scaled)
+    sx,
+    sy, // source position on sprite sheet
+    WOLF_SPRITE.frameWidth, // source width  (one frame)
+    WOLF_SPRITE.frameHeight, // source height (one row)
+  );
 
   pop();
   boss.blobT += 0.02;
@@ -989,34 +869,116 @@ function drawBoss() {
 // ------------------------------------------------------------
 // drawEnemies()
 // Drawn in world coordinates.
+// Draws enemies as animated sprites from the werewolf sheet.
 // ------------------------------------------------------------
 function drawEnemies() {
   for (let i = 0; i < enemies.length; i++) {
     let e = enemies[i];
+
     push();
-    fill(255, 150, 30);
-    noStroke();
 
-    beginShape();
-    let numPoints = 48;
-    for (let j = 0; j < numPoints; j++) {
-      let angle = (TWO_PI / numPoints) * j;
-      let noiseVal = noise(
-        cos(angle) * 0.8 + e.blobT,
-        sin(angle) * 0.8 + e.blobT,
-      );
-      let r = e.r + map(noiseVal, 0, 1, -5, 5);
-      vertex(e.x + cos(angle) * r, e.y + sin(angle) * r);
+    // Advance animation frame
+    e.frameTimer++;
+    if (e.frameTimer >= WOLF_SPRITE.animSpeed) {
+      e.frameTimer = 0;
+      e.currentFrame = (e.currentFrame + 1) % WOLF_SPRITE.numFrames;
     }
-    endShape(CLOSE);
 
-    fill(10);
-    ellipse(e.x - 6, e.y - 4, 6, 6);
-    ellipse(e.x + 6, e.y - 4, 6, 6);
+    // Get the correct row and offset for the animation direction
+    let row = WOLF_SPRITE.rows[e.animDirection];
+    let offset = WOLF_SPRITE.offsets[e.animDirection];
+
+    // Source position on the sprite sheet (with offset applied)
+    let sx = e.currentFrame * WOLF_SPRITE.frameWidth + offset.x;
+    let sy = row * WOLF_SPRITE.frameHeight + offset.y;
+
+    // Draw size (original frame size multiplied by scale)
+    let dw = WOLF_SPRITE.frameWidth * WOLF_SPRITE.scale;
+    let dh = WOLF_SPRITE.frameHeight * WOLF_SPRITE.scale;
+
+    image(
+      werewolf,
+      e.x,
+      e.y, // destination centre position
+      dw,
+      dh, // destination size (scaled)
+      sx,
+      sy, // source position on sprite sheet
+      WOLF_SPRITE.frameWidth, // source width  (one frame)
+      WOLF_SPRITE.frameHeight, // source height (one row)
+    );
+
     pop();
 
     e.blobT += 0.015;
   }
+}
+
+// ------------------------------------------------------------
+// animateSprite()
+// Advances the animation frame at a controlled speed.
+// frameTimer counts up every draw() call.
+// When it reaches animSpeed, we move to the next frame.
+// Only animates when the player is moving — stays on frame 0
+// when idle so the character stands still.
+// ------------------------------------------------------------
+function animateSprite() {
+  if (player.isMoving) {
+    player.frameTimer++;
+
+    // When the timer reaches animSpeed, advance to the next frame
+    // % numFrames wraps back to 0 after the last frame
+    if (player.frameTimer >= SPRITE.animSpeed) {
+      player.frameTimer = 0;
+      player.currentFrame = (player.currentFrame + 1) % SPRITE.numFrames;
+    }
+  } else {
+    // Reset to standing frame when not moving
+    player.currentFrame = 0;
+    player.frameTimer = 0;
+  }
+}
+
+// ------------------------------------------------------------
+// drawCharacter()
+// Draws one frame from the sprite sheet using image() with
+// source rectangle parameters.
+//
+// image(img, dx, dy, dw, dh, sx, sy, sw, sh)
+//   dx, dy — where to draw on the canvas (destination centre)
+//   dw, dh — how large to draw it (destination size)
+//   sx, sy — where to start reading from the sprite sheet
+//   sw, sh — how many pixels to read from the sheet
+//
+// sx slides along the row by multiplying frame number by
+// frameWidth — each frame is one frameWidth apart.
+// sy selects the row by multiplying row index by frameHeight.
+// Drawn in world coordinates.
+// ------------------------------------------------------------
+function drawCharacter() {
+  // Get the correct row and offset for the current direction
+  let row = SPRITE.rows[player.animDirection];
+  let offset = SPRITE.offsets[player.animDirection];
+
+  // Source position on the sprite sheet (with offset applied)
+  let sx = player.currentFrame * SPRITE.frameWidth + offset.x;
+  let sy = row * SPRITE.frameHeight + offset.y;
+
+  // Draw size (original frame size multiplied by scale)
+  let dw = SPRITE.frameWidth * SPRITE.scale;
+  let dh = SPRITE.frameHeight * SPRITE.scale;
+
+  image(
+    mario,
+    player.x,
+    player.y, // destination centre position
+    dw,
+    dh, // destination size (scaled)
+    sx,
+    sy, // source position on sprite sheet
+    SPRITE.frameWidth, // source width  (one frame)
+    SPRITE.frameHeight, // source height (one row)
+  );
 }
 
 // ------------------------------------------------------------
@@ -1033,43 +995,12 @@ function drawBullets() {
 
 // ------------------------------------------------------------
 // drawPlayer()
-// Drawn in world coordinates. Flickers while invincible.
+// Draws the animated sprite character. Flickers while invincible.
+// Drawn in world coordinates.
 // ------------------------------------------------------------
 function drawPlayer() {
   if (player.invincible && floor(player.invincibleTimer / 6) % 2 === 0) return;
-
-  push();
-  fill(0, 200, 180);
-  noStroke();
-
-  beginShape();
-  let numPoints = 48;
-  for (let i = 0; i < numPoints; i++) {
-    let angle = (TWO_PI / numPoints) * i;
-    let noiseVal = noise(
-      cos(angle) * 0.8 + player.blobT,
-      sin(angle) * 0.8 + player.blobT,
-    );
-    let r = player.r + map(noiseVal, 0, 1, -6, 6);
-    vertex(player.x + cos(angle) * r, player.y + sin(angle) * r);
-  }
-  endShape(CLOSE);
-
-  fill(10);
-  ellipse(player.x - 7, player.y - 5, 7, 7);
-  ellipse(player.x + 7, player.y - 5, 7, 7);
-
-  fill(255);
-  image(
-    rock,
-    player.x + player.direction.x * (player.r + 15),
-    player.y + player.direction.y * player.r + 10,
-    20,
-    20,
-  );
-
-  pop();
-  player.blobT += 0.015;
+  drawCharacter();
 }
 
 // ------------------------------------------------------------
@@ -1153,12 +1084,12 @@ function drawHUD() {
   textSize(13);
   textAlign(LEFT);
   textFont("monospace");
-  text("Move: WASD   Shoot: Spacebar   B: Boss fight", 16, 24);
+  text("Move: WASD   Throw: Spacebar   B: Boss fight", 16, 24);
 
   fill(255);
   textSize(16);
   textAlign(RIGHT);
-  text("Score: " + score, width - 16, 28);
+  text("Slain: " + score, width - 16, 28);
 
   let barW = 160;
   let barH = 14;
@@ -1199,9 +1130,9 @@ function drawBossHUD() {
   if (!boss) return;
 
   let barW = 400;
-  let barH = 18;
-  let barX = (width - barW) / 2;
-  let barY = 10;
+  let barH = 14;
+  let barX = 10;
+  let barY = 40;
   let fillW = map(boss.health, 0, boss.maxHealth, 0, barW);
 
   fill(40);
@@ -1219,7 +1150,7 @@ function drawBossHUD() {
   textSize(12);
   textAlign(CENTER);
   textFont("monospace");
-  text("BOSS", width / 2, barY + barH + 14);
+  text("WEREWOLF BOSS", width / 2, barY + barH + 14);
 }
 
 // ------------------------------------------------------------
@@ -1231,12 +1162,12 @@ function drawWinScreen() {
 
   fill(255);
   textAlign(CENTER);
-  textSize(52);
-  text("Boss Defeated!", width / 2, height / 2 - 30);
+  textSize(40);
+  text("You Saved the Village!", width / 2, height / 2 - 30);
 
   fill(180);
   textSize(18);
-  text("Score: " + score, width / 2, height / 2 + 20);
+  text("Werewolves Slain: " + score, width / 2, height / 2 + 20);
 
   fill(120);
   textSize(14);
@@ -1253,12 +1184,12 @@ function drawGameOver() {
 
   fill(255);
   textAlign(CENTER);
-  textSize(52);
-  text("Game Over", width / 2, height / 2 - 30);
+  textSize(40);
+  text("The Werewolves Ate You!", width / 2, height / 2 - 30);
 
   fill(180);
   textSize(18);
-  text("Score: " + score, width / 2, height / 2 + 20);
+  text("Werewolves Slain: " + score, width / 2, height / 2 + 20);
 
   fill(120);
   textSize(14);
@@ -1301,12 +1232,16 @@ function keyPressed() {
     player.x = WORLD_W / 2;
     player.y = WORLD_H - 60;
     player.direction = { x: 0, y: -1 };
+    player.animDirection = "down";
     player.shootTimer = 0;
     player.health = player.maxHealth;
     player.invincible = false;
     player.invincibleTimer = 0;
     player.bounceVX = 0;
     player.bounceVY = 0;
+    player.currentFrame = 0;
+    player.frameTimer = 0;
+    player.isMoving = false;
 
     camX = player.x - width / 2;
     camY = player.y - height / 2;
