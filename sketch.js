@@ -367,30 +367,30 @@ function drawObstacles() {
 
     // Outer glow
     noStroke();
-    fill(255, 100, 0, glow);
+    fill(118, 84, 182, glow);
     rect(x - 4, y - 4, s + 8, s + 8, 8);
 
-    // Lava base
-    fill(180, 40, 0);
+    // Dark base
+    fill(52, 32, 82);
     rect(x, y, s, s, 4);
 
-    // Lava surface patches
-    fill(220, 80, 10);
+    // Surface patches
+    fill(92, 62, 140);
     rect(x + s * 0.1, y + s * 0.1, s * 0.4, s * 0.35, 2);
     rect(x + s * 0.55, y + s * 0.5, s * 0.35, s * 0.3, 2);
     rect(x + s * 0.2, y + s * 0.6, s * 0.25, s * 0.25, 2);
 
     // Crack lines
-    stroke(100, 20, 0);
+    stroke(30, 16, 50);
     strokeWeight(1.5);
     line(x + s * 0.3, y, x + s * 0.5, y + s * 0.4);
     line(x + s * 0.5, y + s * 0.4, x + s * 0.7, y + s * 0.6);
     line(x, y + s * 0.5, x + s * 0.3, y + s * 0.7);
     line(x + s * 0.3, y + s * 0.7, x + s * 0.6, y + s);
 
-    // Hot edge highlight
+    // Edge highlight
     noStroke();
-    fill(255, 140, 0, 180);
+    fill(166, 130, 224, 50);
     rect(x, y, s, 3, 2);
     rect(x, y, 3, s, 2);
 
@@ -1037,7 +1037,7 @@ function drawMinimap() {
   }
 
   // Enemy dots
-  fill(255, 150, 30);
+  fill(254, 226, 2);
   for (let i = 0; i < enemies.length; i++) {
     let p = worldToMap(enemies[i].x, enemies[i].y);
     ellipse(p.x, p.y, 5);
@@ -1045,13 +1045,13 @@ function drawMinimap() {
 
   // Boss dot
   if (boss) {
-    fill(255, 60, 60);
+    fill(234, 132, 66);
     let p = worldToMap(boss.x, boss.y);
     ellipse(p.x, p.y, 8);
   }
 
   // Player dot — drawn last so it's always on top
-  fill(0, 200, 180);
+  fill(143, 111, 211);
   let pp = worldToMap(player.x, player.y);
   ellipse(pp.x, pp.y, 7);
 
@@ -1080,11 +1080,11 @@ function drawMinimap() {
 function drawHUD() {
   noStroke();
 
-  fill(160);
+  fill(255);
   textSize(13);
   textAlign(LEFT);
   textFont("monospace");
-  text("Move: WASD   Throw: Spacebar   B: Boss fight", 16, 24);
+  text("Move: WASD   Throw: Spacebar   B: Alpha Boss", 16, 24);
 
   fill(255);
   textSize(16);
@@ -1108,17 +1108,17 @@ function drawHUD() {
   fill(healthColour);
   rect(barX, barY, fillW, barH, 4);
 
-  fill(200);
+  fill(255);
   textSize(11);
   textAlign(RIGHT);
-  text("Health", width - 16, barY + barH + 12);
+  text("HEALTH", width - 16, barY + barH + 12);
 
   // Boss zone hint — appears when player gets close
   if (gameState === STATE_PLAY && player.y < 600) {
     fill(255, 150, 30, map(player.y, 600, BOSS_ZONE_Y, 0, 255));
     textAlign(CENTER);
     textSize(14);
-    text("Boss zone ahead — proceed carefully", width / 2, height - 20);
+    text("Alpha zone ahead — proceed carefully", width / 2, height - 20);
   }
 }
 
@@ -1131,7 +1131,7 @@ function drawBossHUD() {
 
   let barW = 400;
   let barH = 14;
-  let barX = 10;
+  let barX = 15;
   let barY = 40;
   let fillW = map(boss.health, 0, boss.maxHealth, 0, barW);
 
@@ -1150,7 +1150,7 @@ function drawBossHUD() {
   textSize(12);
   textAlign(CENTER);
   textFont("monospace");
-  text("WEREWOLF BOSS", width / 2, barY + barH + 14);
+  text("ALPHA BOSS", 53, barY + barH + 14);
 }
 
 // ------------------------------------------------------------
@@ -1165,11 +1165,11 @@ function drawWinScreen() {
   textSize(40);
   text("You Saved the Village!", width / 2, height / 2 - 30);
 
-  fill(180);
+  fill(255);
   textSize(18);
   text("Werewolves Slain: " + score, width / 2, height / 2 + 20);
 
-  fill(120);
+  fill(200);
   textSize(14);
   text("Press R to play again", width / 2, height / 2 + 60);
   playEndSoundOnce();
@@ -1187,11 +1187,11 @@ function drawGameOver() {
   textSize(40);
   text("The Werewolves Ate You!", width / 2, height / 2 - 30);
 
-  fill(180);
+  fill(255);
   textSize(18);
   text("Werewolves Slain: " + score, width / 2, height / 2 + 20);
 
-  fill(120);
+  fill(180);
   textSize(14);
   text("Press R to play again", width / 2, height / 2 + 60);
   playEndSoundOnce();
@@ -1210,7 +1210,7 @@ function playEndSoundOnce() {
 // R restarts. B skips to boss fight.
 // ------------------------------------------------------------
 function keyPressed() {
-  // B — skip to boss fight for testing
+  // B — skip to alpha boss fight for testing
   if (key === "b" || key === "B") {
     player.y = BOSS_ZONE_Y - 10;
     if (!boss) spawnBoss();
